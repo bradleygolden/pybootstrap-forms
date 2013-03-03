@@ -13,7 +13,8 @@ def _value_to_id(name, val):
 
 class Field(object):
 
-    def __init__(self, name, label=None, help=None, value=None, attrs=None, required=False):
+    def __init__(self, name, label=None, help=None, value=None, attrs=None, required=False, classes=None):
+        self.classes = classes or []
         self.required = required
         self.errors = []
         self.name = name
@@ -50,13 +51,12 @@ class Field(object):
             return "\n".join(template % (error,) for error in self.errors)
 
     def render_classes(self):
-        classes = []
         if self.required:
-            classes.append("required")
-        if len(classes) == 0:
+            self.classes.append("required")
+        if len(self.classes) == 0:
             return ''
         else:
-            return "class='%s'" % (" ".join(classes),)
+            return "class='%s'" % (" ".join(self.classes),)
 
     def render_field(self):
         return '<input type="%s" id="%s" name="%s" value="%s" %s %s>' % (
