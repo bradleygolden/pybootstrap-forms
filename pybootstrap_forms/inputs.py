@@ -11,6 +11,15 @@ def _value_to_id(name, val):
     return name + "_" + _attribute_sanatize(val)
 
 
+class Markup(object):
+
+    def __init__(self, markup):
+        self.markup = markup
+
+    def render_group(self):
+        return self.markup
+
+
 class Field(object):
 
     def __init__(self, name, label=None, help=None, value=None, attrs=None, required=False, classes=None):
