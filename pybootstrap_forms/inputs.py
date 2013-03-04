@@ -3,12 +3,12 @@ import re
 ATTRIBUTE_SANATIZE = re.compile(r'[^A-Za-z0-9\-_\[\]]')
 
 
-def _attribute_sanatize(val):
-    return ATTRIBUTE_SANATIZE.sub('', val)
-
-
 def _value_to_id(name, val):
-    return name + "_" + _attribute_sanatize(val)
+    return name + "_" + ATTRIBUTE_SANATIZE.sub('', val)
+
+
+def _attr(attr):
+    return attr.replace(r'"', '&quot;')
 
 
 class Markup(object):
@@ -43,7 +43,7 @@ class Field(object):
         if self.attrs is None:
             return ""
         else:
-            return " ".join(("%s='%s'" % (k, v) for k, v in self.attrs.items()))
+            return " ".join(('%s="%s"' % (k, _attr(v)) for k, v in self.attrs.items()))
 
     def render_label(self):
         if not self.label:
@@ -62,7 +62,7 @@ class Field(object):
     def render_classes(self):
         if self.required:
             self.classes.append("required")
-        if len(self.classes) == 0:
+        if not self.classes or len(self.classes) == 0:
             return ''
         else:
             return "class='%s'" % (" ".join(self.classes),)
@@ -118,7 +118,6 @@ class Checkbox(Field):
     def __init__(self, name, allowed_value, **kwargs):
         self.allowed_value = allowed_value
         super(Checkbox, self).__init__(name, **kwargs)
-        self.label = None
 
     def validate(self):
         if self.value and self.value != self.allowed_value:
@@ -127,15 +126,18 @@ class Checkbox(Field):
             self.errors.append(error)
         return super(Checkbox, self).validate()
 
+    def render_label(self):
+        return ''
+
     def render_field(self):
         template = """
             <label class="checkbox">
                 <input type="checkbox" name="%s" id="%s" value="%s" %s %s %s>
                 %s
             </label>"""
-        params = (self.name, self.name, self.value,
-                  "checked='checked'" if self.value == self.allowed_value else "",
-                  self.attrs_string(), self.label, self.render_classes())
+        params = (self.name, self.name, self.allowed_value,
+                  'checked="checked"' if self.value == self.allowed_value else "",
+                  self.attrs_string(), self.render_classes(), self.label)
         return template % params
 
 
@@ -186,7 +188,7 @@ class Exclusive(Multiple):
 class Dropdown(Exclusive):
 
     def render_field(self):
-        options = ("<option value='%s' %s>%s</option>" % (val, "selected='selected'" if val == self.value else "", label) for (val, label) in self.value_pairs)
+        options = ('<option value="%s" %s>%s</option>' % (_attr(val), 'selected="selected"' if val == self.value else "", label) for (val, label) in self.value_pairs)
         params = (self.name, self.name, self.attrs_string(),
                   self.render_classes(), "\t\n".join(options))
         return """
@@ -198,6 +200,13 @@ class Dropdown(Exclusive):
 
 class Radios(Exclusive):
 
+    def render_label(self):
+        if not self.label:
+            return ""
+        else:
+            return '<label class="control-label">%s</label>' % (
+                self.label)
+
     def render_field(self):
         template = """
             <label class="radio">
@@ -205,5 +214,5 @@ class Radios(Exclusive):
                 %s
             </label>
         """
-        radios = (template % (self.name, _value_to_id(self.name, val), val, "checked='checked'" if val == self.value else "", label) for (val, label) in self.value_pairs)
+        radios = (template % (self.name, _value_to_id(self.name, val), val, 'checked="checked"' if val == self.value else "", label) for (val, label) in self.value_pairs)
         return "\n".join(radios)

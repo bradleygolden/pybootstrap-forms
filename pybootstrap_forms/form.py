@@ -9,11 +9,12 @@ class Form(object):
         self.fields_ordered = args
         fields_named = dict()
         for field in args:
-            fields_named[field.name] = field
+            if hasattr(field, 'name'):
+                fields_named[field.name] = field
         self.fields_named = fields_named
 
     def render(self):
-        groups = (field.render_group() for field in self.fields)
+        groups = (field.render_group() for field in self.fields_ordered)
         legend = "<legend>" + self.name + "</legend>" if self.name else ""
         return """
             <fieldset>
