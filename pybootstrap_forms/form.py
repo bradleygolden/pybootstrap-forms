@@ -9,7 +9,10 @@ class Form(object):
         self.fields_ordered = args
         fields_named = dict()
         for field in args:
-            if hasattr(field, 'name'):
+            if hasattr(field, 'sub_fields'):
+                for sub_field in field.sub_fields:
+                    fields_named[sub_field.name] = sub_field
+            elif hasattr(field, 'name'):
                 fields_named[field.name] = field
         self.fields_named = fields_named
 
@@ -44,14 +47,14 @@ class Form(object):
             A dict mapping of all values in the form from the name of a
             field to its corresponding value
         """
-        return {field.name: field.value for field in self.fields}
+        return {field.name: field.value for name, field in self.fields_named.items()}
 
     def empty(self):
         """Removes all values from the form, so that the structure is as given,
         but all the fields have no value.  Note that this may result in an
         invalid form state for valid fields"""
         for field in self.fields_ordered:
-                field.value = None
+            field.value = None
 
     def validate(self):
         """Attempts to valdiate the given value of each field.
@@ -63,6 +66,20 @@ class Form(object):
         for field in self.fields:
             is_valid = is_valid and field.validate()
         return is_valid
+
+    def errors(self):
+        """Returns a dictionary of field names and the errors with their
+        field.  An empty dictionary represents either a form that hasn't
+        been validated yet, or a correct / valid form.
+
+        Return:
+            A dictionary of {field name: [error strings]}
+        """
+        errors = {}
+        for field in self.fields:
+            if len(field.errors):
+                errors[field.name] = field.errors
+        return errors
 
     @property
     def fields(self):

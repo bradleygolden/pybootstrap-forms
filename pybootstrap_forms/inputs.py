@@ -172,6 +172,7 @@ class Multiple(Field):
 class Exclusive(Multiple):
 
     def allowed_values(self):
+        print self.value_pairs
         return (value for (value, display) in self.value_pairs)
 
     def validate(self):
@@ -179,8 +180,8 @@ class Exclusive(Multiple):
         of them, for validation just check to make sure that that the current
         value is one of the allowed values."""
         if self.value and self.value not in self.allowed_values():
-            error = "%s is not a valid value for %s" % (
-                self.value_sanatized(), self.name)
+            error = "%s is not a valid value for '%s'" % (
+                self.value_sanatized(), self.label or self.name)
             self.errors.append(error)
         return super(Exclusive, self).validate()
 
