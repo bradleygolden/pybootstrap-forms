@@ -172,7 +172,6 @@ class Multiple(Field):
 class Exclusive(Multiple):
 
     def allowed_values(self):
-        print self.value_pairs
         return (value for (value, display) in self.value_pairs)
 
     def validate(self):
